@@ -21,14 +21,14 @@ If you want to use the crawler for live- or professional purposes rewrite the OA
 
 
 
-##Setup
+## Setup
 Add your personal account-data at the `config.ini` file and start the crawler by running
 ```
 pip main.py 
 ```
 You may have first creat your personal app credentials at the Netatmo Website at https://dev.netatmo.com/apps/createanapp#form
 
-##Notes
+## Notes
 Per default the data will be fetched every 10minutes as it is the maximum resolution for the Netatmo API.
 \
 The data will be stored in a SQL-Database in the format
