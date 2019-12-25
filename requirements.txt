@@ -1,0 +1,5 @@
+SQLAlchemy==1.3.5
+requests
+requests_oauthlib
+psycopg2
+pymysql
