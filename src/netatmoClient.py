@@ -1,4 +1,4 @@
-from oauthlib.oauth2 import LegacyApplicationClient
+from oauthlib.oauth2 import LegacyApplicationClient, TokenExpiredError
 from requests_oauthlib import OAuth2Session
 import logging
 import requests
@@ -157,10 +157,15 @@ class NetatmoClient:
                     else:
                         return None
 
+        except TokenExpiredError:
+            self._reinit_oauth_session()
+            return self.get_measurement()
+
         except requests.exceptions.ConnectionError:  #
             logging.warning("Connection Error @ get_measurement()")
             self._handle_connection_error()
             return []  # exit
+        
         except requests.exceptions.Timeout:
             logging.warning("Timeout @ get_measurement()")
             self._handle_timeout()
