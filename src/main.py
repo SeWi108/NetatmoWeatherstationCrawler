@@ -25,7 +25,7 @@ config.read('config.ini')
 _netatmo_login = {
     'user': config['NETATMO_LOGIN']['USER'],
     'password': config['NETATMO_LOGIN']['PASSWORD'],
-    'station_mac': config['NETATMO_LOGIN']['STATION_MAC']
+    'station_macs': config['NETATMO_LOGIN']['STATION_MACS'].split(";")
 }
 _netatmo_client_setting = {
     'client_id': config['NETATMO_CLIENT']['CLIENT_ID'],
@@ -59,3 +59,5 @@ crawler = Crawler(_crawler_setting, _netatmo_login, _netatmo_client_setting, _da
 
 print("Initialized! Start crawling.")
 sync_thread()
+
+

@@ -110,16 +110,8 @@ class NetatmoClient:
             logging.error("Handling unexpected HTTP status-code with reinitializing the Netatmo-oAuth-Session.")
             self._reinit_oauth_session()
 
-    def _handle_timeout(self):
-        logging.info("Handling timeout with reinitializing the Netatmo-oAuth-Session.")
-        self._reinit_oauth_session()
-
-    def _handle_connection_error(self):
-        logging.info("Handling ConnectionError with reinitializing the Netatmo-oAuth-Session.")
-        self._reinit_oauth_session()
-
-    def get_measurement(self):
-        logging.info("Get the measurements of the handed station. (MAC: " + self._netatmo_login['station_mac'] + ")")
+    def get_measurement(self, station_mac):
+        logging.info("Get the measurements of the handed station. (MAC: " + station_mac + ")")
 
         if self._lock_reinit_oAuth:
             logging.info("Execution locked (During reinitializing the oAuth Session).")
@@ -128,12 +120,11 @@ class NetatmoClient:
         try:
             # get measurements form the api
             measurement_response = self._netatmo_oauth.get(
-                _STATION_DATA_URL + "?device_id=" + urllib.parse.quote(
-                    self._netatmo_login['station_mac']) + "&get_favorites=false",
+                _STATION_DATA_URL + "?device_id=" + urllib.parse.quote(station_mac) + "&get_favorites=false",
                 timeout=self._netatmo_client_settings['timeout'])
 
             if measurement_response.status_code != 200:
-                logging.warning('HTTP status code @ get_measurement(' + self._netatmo_login['station_mac'] + '). Code: '
+                logging.warning('HTTP status code @ get_measurement(' + station_mac + '). Code: '
                                 + str(measurement_response.status_code))
                 self._handle_statuscode(measurement_response.status_code)
                 return []  # exit
@@ -149,7 +140,7 @@ class NetatmoClient:
                     if measurement_response_json:
                         return Measurement(
                             time_utc=measurement_response_json["body"]["devices"][0]["dashboard_data"]["time_utc"],
-                            station_mac=self._netatmo_login["station_mac"],
+                            station_mac=station_mac,
                             co2=measurement_response_json["body"]["devices"][0]["dashboard_data"]["CO2"],
                             noise=measurement_response_json["body"]["devices"][0]["dashboard_data"]["Noise"],
                             temperature=measurement_response_json["body"]["devices"][0]["dashboard_data"]["Temperature"]
@@ -158,15 +149,19 @@ class NetatmoClient:
                         return None
 
         except TokenExpiredError:
+            logging.warning("TokenExpiredError @ get_measurement()")
+            logging.info("Handling TokenExpiredError with reinitializing the Netatmo-oAuth-Session.")
             self._reinit_oauth_session()
-            return self.get_measurement()
+            return self.get_measurement(station_mac)
 
         except requests.exceptions.ConnectionError:  #
             logging.warning("Connection Error @ get_measurement()")
+            logging.info("Handling ConnectionError with reinitializing the Netatmo-oAuth-Session.")
             self._handle_connection_error()
-            return []  # exit
+            return self.get_measurement(station_mac)
         
         except requests.exceptions.Timeout:
             logging.warning("Timeout @ get_measurement()")
+            logging.info("Handling timeout with reinitializing the Netatmo-oAuth-Session.")
             self._handle_timeout()
-            return []  # exit
+            return self.get_measurement(station_mac)

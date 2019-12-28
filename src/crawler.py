@@ -26,6 +26,7 @@ class Crawler:
         :param database_login: Database login-data
         """
         self._crawler_setting = crawler_settings
+        self._netatmo_login = netatmo_login
 
         try:
             self._netatmo_client = NetatmoClient(netatmo_login, netatmo_client_setting)
@@ -39,7 +40,8 @@ class Crawler:
         """
         Crawl the current measurement and store to the database.
         """
-        measurement = self._netatmo_client.get_measurement()
+        for station_mac in self._netatmo_login["station_macs"]:
+            measurement = self._netatmo_client.get_measurement(station_mac)
 
-        if measurement is not None:
-            self._database_connector.push_measurement(measurement=measurement)
+            if measurement is not None:
+                self._database_connector.push_measurement(measurement=measurement)
